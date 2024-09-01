@@ -45,10 +45,10 @@ This software is licensed under the [MIT license](http://opensource.org/licenses
 
 ## Changelog
 
+### Version 1.0.1 [ Sep 01, 2024 ]
+
+-   Code Improvements
+
 ### Version 1.0.0 [ Aug 22, 2024 ]
 
 -   Initial Realease
-
-### Version 1.0.0 [ Sep 01, 2024 ]
-
--   Code Improvements
