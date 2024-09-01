@@ -48,3 +48,7 @@ This software is licensed under the [MIT license](http://opensource.org/licenses
 ### Version 1.0.0 [ Aug 22, 2024 ]
 
 -   Initial Realease
+
+### Version 1.0.0 [ Sep 01, 2024 ]
+
+-   Code Improvements

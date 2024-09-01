@@ -19,14 +19,11 @@ exit;
 
 class RBRP_Related_Posts {
 	static $instance;
-	public static function get_instance() {
-		if ( ! self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
+	
 
 	private function __construct(){
+		// Improvement #10: include plugin.php once instead of every init call
+		include_once ABSPATH . 'wp-admin/includes/plugin.php';
 		add_action( 'init', array( $this, 'init') );
 		add_action( 'the_content', array( $this, 'display_related_posts' ) );
 		add_action('admin_menu', array( $this, 'related_posts_setting_page' ) );
@@ -34,12 +31,22 @@ class RBRP_Related_Posts {
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'related_post_setting_link' ) );
 	}
 
+	// Improvement #1: implementation of __clone and __wakeup
+	// Prevent object cloning
+	private function __clone() {}
+
+	public static function get_instance() {
+		if ( ! self::$instance ) {
+			self::$instance = new self();
+		}
+		return self::$instance;
+	}
+
 	/**
 	 * Manages Constants and initialization of this plugins.
 	 */
 	public function init(){
 		// Determine plugin version and setting up Constants
-		include_once ABSPATH . 'wp-admin/includes/plugin.php';
 		$plugin_data = get_plugin_data( __FILE__ );
 		if ( ! defined( 'PLUGIN_VERSION' ) ) {
 			define( 'PLUGIN_VERSION', $plugin_data['Version'] );
@@ -62,8 +69,11 @@ class RBRP_Related_Posts {
 	 */
 	public function display_related_posts($content) {
 		if ( is_single() ){
-			$max_post_number = get_option('related_posts_max_posts') ? get_option('related_posts_max_posts') : 5;
-			$template_style = get_option('related_posts_style') ? get_option('related_posts_style') : 'style_vertical_list';
+			// Improvement #4: optimize function call( get_option() ) by not calling multiple times.
+			$option_max_posts = (int) get_option( 'related_posts_max_posts' );
+			$option_template_style = sanitize_text_field( get_option( 'related_posts_style' ) );
+			$max_post_number = $option_max_posts ? $option_max_posts : 5;
+			$template_style = $option_template_style ? $option_template_style : 'style_vertical_list';
 
 			$post_id = get_the_ID();
 			$categories = get_the_terms( $post_id, 'category' );
@@ -82,7 +92,9 @@ class RBRP_Related_Posts {
 				$query = new WP_Query($args);
 				if ( $query->have_posts() ){
 					$content .= '<div class="related-posts-wrapper">';
-					$content .= '<h3>'. esc_html( __( 'Related Posts:', 'rb-related-posts' ) ) . '</h3>';
+
+					// Improvement #2 Fix Text domain
+					$content .= '<h3>'. esc_html( __( 'Related Posts:', 'rbrp' ) ) . '</h3>';
 					
 					if( 'style_vertical_list' === $template_style ) :
 						$content .= '<div class="related-posts-list">';
@@ -116,6 +128,8 @@ class RBRP_Related_Posts {
 				return $content;
 			}
 		}
+		// Improvement #12 Ensure retrun of content
+		return $content;
 	}
 
 	/**
@@ -202,10 +216,13 @@ class RBRP_Related_Posts {
 	public function save_plugin_setting(){
 		check_admin_referer('rbrp_form');
 		if( isset( $_POST['max-posts'])){
-			update_option( 'related_posts_max_posts', (int) $_POST['max-posts'] );
+
+			// Improvement #3 Sanitizing user input, int and text.
+			$max_posts = (int) sanitize_text_field( $_POST['max-posts'] );
+			update_option( 'related_posts_max_posts', $max_posts );
 		}
 		if( isset( $_POST['rp-template'])){
-			update_option( 'related_posts_style', sanitize_text_field($_POST['rp-template'])  );
+			update_option( 'related_posts_style', sanitize_text_field( $_POST['rp-template'] )  );
 		}
 		wp_redirect('admin.php?page=related-posts-settings');
 	}
